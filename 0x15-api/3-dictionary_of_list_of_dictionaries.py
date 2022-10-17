@@ -1,38 +1,27 @@
 #!/usr/bin/python3
-"""
-Python script to export data in the JSON format.
-"""
-import json
-import requests as r
-
+"""Exports data in the JSON format"""
 
 if __name__ == "__main__":
-    resp_user = r.get('https://jsonplaceholder.typicode.com/users')
-    resp_todos = r.get('https://jsonplaceholder.typicode.com/todos')
 
-    try:
-        users = resp_user.json()
-        user_todos = resp_todos.json()
+    import json
+    import requests
+    import sys
 
-        data = {}
+    users = requests.get("https://jsonplaceholder.typicode.com/users")
+    users = users.json()
+    todos = requests.get('https://jsonplaceholder.typicode.com/todos')
+    todos = todos.json()
+    todoAll = {}
 
-        for user in users:
-            user_id = user.get('id')
+    for user in users:
+        taskList = []
+        for task in todos:
+            if task.get('userId') == user.get('id'):
+                taskDict = {"username": user.get('username'),
+                            "task": task.get('title'),
+                            "completed": task.get('completed')}
+                taskList.append(taskDict)
+        todoAll[user.get('id')] = taskList
 
-            usr_todos = list(filter(lambda todo: (
-                todo.get('userId') == user_id), user_todos))
-            tasks = list(map(lambda todo: {
-                "title": todo.get('title'),
-                "completed": todo.get('completed'),
-                "username": user.get('username')
-            }, usr_todos))
-
-            data[user_id] = tasks
-
-            json_name = 'todo_all_employees.json'
-
-            with open(json_name, mode='w', encoding='utf-8') as jsons:
-                json.dump(data, jsons)
-
-    except Exception as e:
-        print(e)
+    with open('todo_all_employees.json', mode='w') as f:
+        json.dump(todoAll, f)
